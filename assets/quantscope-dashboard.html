@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuantScope — Market Direction & Fixed Income Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10141c;
+    --ink-2:#161c27;
+    --panel:#1b2230;
+    --panel-2:#212a3a;
+    --hair:#2c3547;
+    --parchment:#f6f1e4;
+    --gold:#c6a15b;
+    --gold-dim:#8f7847;
+    --green:#35c48c;
+    --red:#e1615a;
+    --mist:#8c93a6;
+    --mist-dim:#5c6478;
+    --white:#f3f1ea;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--white);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit;}
+
+  /* ===== Ticker ===== */
+  .ticker-wrap{
+    background:var(--panel-2);
+    border-bottom:1px solid var(--hair);
+    overflow:hidden;
+    white-space:nowrap;
+    padding:9px 0;
+  }
+  .ticker-track{
+    display:inline-block;
+    white-space:nowrap;
+    animation:scroll 32s linear infinite;
+  }
+  .ticker-wrap:hover .ticker-track{animation-play-state:paused;}
+  @keyframes scroll{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(-50%);}
+  }
+  .tick{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    padding:0 22px;
+    color:var(--mist);
+    border-right:1px solid var(--hair);
+  }
+  .tick b{color:var(--white);font-weight:500;}
+  .tick .up{color:var(--green);}
+  .tick .down{color:var(--red);}
+
+  /* ===== Header / Nav ===== */
+  header{
+    padding:20px 40px 0;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .brand-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    padding-bottom:22px;
+  }
+  .brand{display:flex;align-items:baseline;gap:12px;}
+  .brand h1{font-size:26px;letter-spacing:0.2px;}
+  .brand span{color:var(--gold);font-size:26px;font-family:'Fraunces',serif;font-weight:600;}
+  .brand-tag{font-size:12.5px;color:var(--mist);font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;}
+  .header-links{display:flex;gap:18px;font-size:13px;}
+  .header-links a{
+    color:var(--mist);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+    padding-bottom:2px;
+  }
+  .header-links a:hover{color:var(--gold);border-bottom-color:var(--gold);}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    border-bottom:1px solid var(--hair);
+  }
+  .tab-btn{
+    background:none;
+    border:none;
+    color:var(--mist);
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    font-weight:500;
+    padding:12px 20px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .tab-btn:hover{color:var(--white);}
+  .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+  main{max-width:1180px;margin:0 auto;padding:36px 40px 60px;}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fadein .35s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ===== Overview hero ===== */
+  .hero{
+    display:grid;
+    grid-template-columns:1.15fr 0.85fr;
+    gap:40px;
+    padding:20px 0 46px;
+    border-bottom:1px solid var(--hair);
+    align-items:center;
+  }
+  .hero h2{
+    font-size:42px;
+    line-height:1.15;
+    font-weight:600;
+    max-width:520px;
+  }
+  .hero h2 em{color:var(--gold);font-style:normal;}
+  .hero p{
+    color:var(--mist);
+    font-size:15.5px;
+    line-height:1.65;
+    max-width:480px;
+    margin-top:16px;
+  }
+  .hero-cta{display:flex;gap:12px;margin-top:26px;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:11px 20px;border-radius:6px;
+    font-size:13.5px;font-weight:500;
+    text-decoration:none;cursor:pointer;border:1px solid var(--hair);
+  }
+  .btn-gold{background:var(--gold);color:#1b1305;border:none;}
+  .btn-gold:hover{background:#d4ad68;}
+  .btn-ghost{background:transparent;color:var(--white);}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+
+  .hero-stat-card{
+    background:var(--panel);
+    border:1px solid var(--hair);
+    border-radius:var(--radius);
+    padding:22px;
+  }
+  .hero-stat-card .label{font-size:11.5px;text-transform:uppercase;letter-spacing:0.8px;color:var(--mist-dim);}
+  .stat-row{display:flex;justify-content:space-between;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--hair);}
+  .stat-row:last-child{border-bottom:none;}
+  .stat-row .k{color:var(--mist);font-size:13.5px;}
+  .stat-row .v{font-family:'IBM Plex Mono',monospace;font-size:14.5px;}
+
+  .module-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    margin-top:40px;
+  }
+  .module-card{
+    background:var(--panel);
+    border:1px solid var(--hair);
+    border-radius:var(--radius);
+    padding:26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .module-card .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;letter-spacing:0.8px;text-transform:uppercase;color:var(--gold-dim);
+  }
+  .module-card h3{font-size:21px;margin:9px 0 10px;}
+  .module-card p{color:var(--mist);font-size:14px;line-height:1.6;margin-bottom:18px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px;}
+  .chip{
+    font-size:11.5px;font-family:'IBM Plex Mono',monospace;
+    background:var(--panel-2);border:1px solid var(--hair);
+    color:var(--mist);padding:4px 9px;border-radius:100px;
+  }
+  .module-card .go{
+    font-size:13.5px;color:var(--gold);cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;font-weight:500;
+  }
+
+  /* ===== shared panel head ===== */
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:28px;}
+  .panel-head h2{font-size:28px;}
+  .panel-head .sub{color:var(--mist);font-size:14px;margin-top:6px;max-width:560px;}
+  .live-link{
+    font-size:13px;color:var(--gold);text-decoration:none;
+    border:1px solid var(--gold-dim);padding:8px 14px;border-radius:6px;white-space:nowrap;
+  }
+  .live-link:hover{background:rgba(198,161,91,0.1);}
+
+  .badge{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.5px;
+    padding:3px 8px;border-radius:4px;text-transform:uppercase;
+  }
+  .badge-demo{background:rgba(198,161,91,0.12);color:var(--gold);border:1px solid rgba(198,161,91,0.35);}
+  .badge-live{background:rgba(53,196,140,0.12);color:var(--green);border:1px solid rgba(53,196,140,0.35);}
+
+  /* ===== Market direction panel ===== */
+  .md-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:24px;}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:var(--radius);padding:22px;}
+  .card h3{font-size:15px;color:var(--mist);font-weight:500;font-family:'Inter',sans-serif;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.6px;font-size:11.5px;}
+  .ticker-select{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .tsel{
+    background:var(--panel-2);border:1px solid var(--hair);color:var(--mist);
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:6px 12px;border-radius:6px;cursor:pointer;
+  }
+  .tsel.active{border-color:var(--gold);color:var(--gold);}
+
+  .decision-badge{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:10px 16px;border-radius:8px;margin-bottom:18px;
+  }
+  .decision-badge.long{background:rgba(53,196,140,.12);border:1px solid rgba(53,196,140,.4);}
+  .decision-badge.short{background:rgba(225,97,90,.12);border:1px solid rgba(225,97,90,.4);}
+  .decision-badge .dot{width:9px;height:9px;border-radius:50%;}
+  .decision-badge.long .dot{background:var(--green);}
+  .decision-badge.short .dot{background:var(--red);}
+  .decision-badge .txt{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;}
+  .decision-badge.long .txt{color:var(--green);}
+  .decision-badge.short .txt{color:var(--red);}
+
+  .prob-bars{margin-bottom:18px;}
+  .prob-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  .prob-label{width:58px;color:var(--mist);}
+  .prob-track{flex:1;height:8px;background:var(--panel-2);border-radius:4px;overflow:hidden;}
+  .prob-fill{height:100%;border-radius:4px;}
+  .prob-val{width:44px;text-align:right;}
+
+  .feat-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  .feat-table td{padding:8px 0;border-bottom:1px solid var(--hair);}
+  .feat-table td:first-child{color:var(--mist);}
+  .feat-table td:last-child{text-align:right;}
+  .feat-table tr:last-child td{border-bottom:none;}
+
+  /* ===== Bond calculator ===== */
+  .bond-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:24px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12px;color:var(--mist);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.3px;}
+  .field input, .field select{
+    width:100%;background:var(--panel-2);border:1px solid var(--hair);color:var(--white);
+    padding:10px 12px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;
+  }
+  .field input:focus, .field select:focus{outline:none;border-color:var(--gold);}
+  .result-row{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--hair);}
+  .result-row:last-child{border-bottom:none;}
+  .result-row .k{font-size:13px;color:var(--mist);}
+  .result-row .v{font-family:'IBM Plex Mono',monospace;font-size:16.5px;}
+  .result-row .v.big{font-size:26px;color:var(--gold);font-family:'Fraunces',serif;font-weight:600;}
+  .shock-row{display:flex;align-items:center;gap:12px;margin-top:8px;}
+  .shock-row input[type=range]{flex:1;accent-color:var(--gold);}
+  .shock-val{font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:56px;text-align:right;}
+
+  svg.chart{width:100%;height:220px;display:block;}
+  .glossary-note{
+    font-size:12px;color:var(--mist-dim);border-top:1px solid var(--hair);
+    padding-top:14px;margin-top:18px;line-height:1.6;
+  }
+  .glossary-note b{color:var(--mist);}
+
+  /* ===== Methodology ===== */
+  .pipeline{display:flex;align-items:center;gap:0;margin:22px 0 34px;flex-wrap:wrap;}
+  .pstep{
+    background:var(--panel);border:1px solid var(--hair);border-radius:8px;
+    padding:14px 16px;font-size:12.5px;color:var(--mist);min-width:130px;text-align:center;
+  }
+  .pstep b{display:block;color:var(--white);font-size:13.5px;margin-bottom:3px;font-family:'IBM Plex Mono',monospace;}
+  .parrow{color:var(--gold-dim);padding:0 10px;font-size:16px;}
+  .tech-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+  .tech-card h4{font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:var(--gold-dim);margin-bottom:12px;font-family:'IBM Plex Mono',monospace;}
+
+  footer{
+    border-top:1px solid var(--hair);
+    padding:28px 40px;
+    max-width:1180px;margin:0 auto;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+  }
+  footer .credit{font-size:13px;color:var(--mist);}
+  footer .credit b{color:var(--white);font-weight:500;}
+  footer .foot-links{display:flex;gap:18px;font-size:13px;}
+  footer .foot-links a{color:var(--mist);text-decoration:none;}
+  footer .foot-links a:hover{color:var(--gold);}
+
+  @media (max-width:820px){
+    .hero{grid-template-columns:1fr;}
+    .module-grid,.md-grid,.bond-grid,.tech-grid{grid-template-columns:1fr;}
+    header,main,footer{padding-left:20px;padding-right:20px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="ticker-wrap">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<header>
+  <div class="brand-row">
+    <div>
+      <div class="brand"><h1>Quant<span>Scope</span></h1></div>
+      <div class="brand-tag">MARKET DIRECTION &nbsp;·&nbsp; FIXED INCOME VALUATION &nbsp;·&nbsp; ML-DRIVEN</div>
+    </div>
+    <div class="header-links">
+      <a href="https://github.com/ridhimabrb/Trading-Analyst" target="_blank">Equity repo ↗</a>
+      <a href="https://github.com/ridhimabrb/ML-Powered-Bond-Yield-Forecaster" target="_blank">Bond repo ↗</a>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="market">Market Direction</button>
+    <button class="tab-btn" data-tab="bond">Bond Yield Lab</button>
+    <button class="tab-btn" data-tab="method">Methodology</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ================= OVERVIEW ================= -->
+  <section class="panel active" id="overview">
+    <div class="hero">
+      <div>
+        <h2>One lens on price. One lens on <em>value</em>.</h2>
+        <p>QuantScope pairs a machine-learning market direction classifier with a fixed-income valuation and yield-forecasting engine — the two sides of how quants actually think: where is the price going, and what is the cash flow worth. Built on live Yahoo Finance data and Indian G-Sec yield history.</p>
+        <div class="hero-cta">
+          <a class="btn btn-gold" href="#" onclick="switchTab('market');return false;">Explore market signal</a>
+          <a class="btn btn-ghost" href="#" onclick="switchTab('bond');return false;">Open bond lab</a>
+        </div>
+      </div>
+      <div class="hero-stat-card">
+        <div class="label">System snapshot</div>
+        <div class="stat-row"><span class="k">Equity classifier</span><span class="v mono">Logistic Regression</span></div>
+        <div class="stat-row"><span class="k">Directional accuracy*</span><span class="v mono">~54–55%</span></div>
+        <div class="stat-row"><span class="k">Yield forecaster</span><span class="v mono">Random Forest</span></div>
+        <div class="stat-row"><span class="k">Bond valuation method</span><span class="v mono">DCF, live</span></div>
+        <div class="stat-row"><span class="k">Data horizon</span><span class="v mono">2016–2026</span></div>
+      </div>
+    </div>
+
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="eyebrow">Module 01 — Equities</div>
+        <h3>Market Direction Analyst</h3>
+        <p>Predicts short-term UP / DOWN probability from technical indicators (RSI, moving averages, rolling volatility), then an agent layer turns those probabilities into a LONG / SHORT / NO TRADE call with a plain-language rationale.</p>
+        <div class="chip-row">
+          <span class="chip">yfinance</span><span class="chip">scikit-learn</span><span class="chip">pandas</span><span class="chip">Streamlit</span>
+        </div>
+        <span class="go" onclick="switchTab('market')">View demo panel →</span>
+      </div>
+      <div class="module-card">
+        <div class="eyebrow">Module 02 — Fixed income</div>
+        <h3>Bond Yield Forecaster</h3>
+        <p>Prices bonds via discounted cash flow, forecasts 30-day G-Sec yield moves with a Random Forest model, then reprices the bond under that forecast to show expected value and price change.</p>
+        <div class="chip-row">
+          <span class="chip">DCF valuation</span><span class="chip">Random Forest</span><span class="chip">Plotly</span><span class="chip">Streamlit</span>
+        </div>
+        <span class="go" onclick="switchTab('bond')">Open live calculator →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MARKET DIRECTION ================= -->
+  <section class="panel" id="market">
+    <div class="panel-head">
+      <div>
+        <h2>Market Direction Analyst <span class="badge badge-demo" style="margin-left:8px;">Illustrative data</span></h2>
+        <div class="sub">This panel replays a sample session so the interaction is visible without a live backend. For a real-time prediction on the trained model, open the deployed app.</div>
+      </div>
+      <a class="live-link" href="https://trading-analyst-hd2do6ygvbeyuw33bjb4nx.streamlit.app/" target="_blank">Open live model ↗</a>
+    </div>
+
+    <div class="ticker-select" id="tselRow"></div>
+
+    <div class="md-grid">
+      <div class="card">
+        <h3>Price &amp; signal (60-session sample)</h3>
+        <svg class="chart" id="priceChart" viewBox="0 0 640 220"></svg>
+        <div class="glossary-note">
+          <b>RSI</b> (Relative Strength Index) flags overbought/oversold momentum on a 0–100 scale. <b>Rolling volatility</b> is the standard deviation of recent returns — a proxy for near-term risk.
+        </div>
+      </div>
+      <div class="card">
+        <h3>Model output</h3>
+        <div id="decisionBadge"></div>
+        <div class="prob-bars" id="probBars"></div>
+        <table class="feat-table" id="featTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BOND YIELD LAB ================= -->
+  <section class="panel" id="bond">
+    <div class="panel-head">
+      <div>
+        <h2>Bond Yield Lab <span class="badge badge-live" style="margin-left:8px;">Live math</span></h2>
+        <div class="sub">This DCF calculator runs real present-value math in your browser — change any input and the price, duration, and yield-shock sensitivity recompute instantly.</div>
+      </div>
+      <a class="live-link" href="https://ml-powered-bond-yield-forecaster-ridhimabrb.streamlit.app/" target="_blank">Open live forecaster ↗</a>
+    </div>
+
+    <div class="bond-grid">
+      <div class="card">
+        <h3>Bond inputs</h3>
+        <div class="field">
+          <label>Face value (₹)</label>
+          <input type="number" id="faceValue" value="1000" step="100">
+        </div>
+        <div class="field">
+          <label>Annual coupon rate (%)</label>
+          <input type="number" id="couponRate" value="7.2" step="0.05">
+        </div>
+        <div class="field">
+          <label>Years to maturity</label>
+          <input type="number" id="maturity" value="10" step="1">
+        </div>
+        <div class="field">
+          <label>Market yield / YTM (%)</label>
+          <input type="number" id="marketYield" value="7.0" step="0.05">
+        </div>
+        <div class="field">
+          <label>Coupon frequency</label>
+          <select id="frequency">
+            <option value="2">Semi-annual</option>
+            <option value="1">Annual</option>
+          </select>
+        </div>
+
+        <div class="glossary-note">
+          <b>DCF (discounted cash flow):</b> every future coupon and the final principal repayment is discounted back to today at the market yield — the sum is the bond's fair price. <b>Duration:</b> the weighted-average time to receive the bond's cash flows, and a first-order measure of interest-rate risk.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Valuation output</h3>
+        <div class="result-row"><span class="k">Fair price (DCF)</span><span class="v big" id="bondPrice">—</span></div>
+        <div class="result-row"><span class="k">Premium / discount to face</span><span class="v" id="bondPremium">—</span></div>
+        <div class="result-row"><span class="k">Macaulay duration</span><span class="v" id="macDuration">—</span></div>
+        <div class="result-row"><span class="k">Modified duration</span><span class="v" id="modDuration">—</span></div>
+
+        <div style="margin-top:20px;">
+          <div class="k" style="font-size:13px;color:var(--mist);margin-bottom:8px;">Yield shock scenario</div>
+          <div class="shock-row">
+            <input type="range" id="shockSlider" min="-200" max="200" value="50" step="5">
+            <span class="shock-val mono" id="shockVal">+50 bps</span>
+          </div>
+          <div class="result-row" style="margin-top:10px;"><span class="k">Repriced bond value</span><span class="v" id="shockPrice">—</span></div>
+          <div class="result-row"><span class="k">Estimated price change</span><span class="v" id="shockDelta">—</span></div>
+        </div>
+
+        <svg class="chart" id="yieldCurveChart" viewBox="0 0 640 140" style="margin-top:18px;"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= METHODOLOGY ================= -->
+  <section class="panel" id="method">
+    <div class="panel-head">
+      <div>
+        <h2>How it's built</h2>
+        <div class="sub">Two independent Streamlit apps, combined here into one architectural story and one interface.</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;color:var(--mist);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;font-weight:500;">Equity pipeline</h3>
+    <div class="pipeline">
+      <div class="pstep"><b>Data</b>Live OHLCV via yfinance</div><div class="parrow">→</div>
+      <div class="pstep"><b>Features</b>Returns, RSI, MAs, volatility</div><div class="parrow">→</div>
+      <div class="pstep"><b>Model</b>Logistic Regression, time-split</div><div class="parrow">→</div>
+      <div class="pstep"><b>Agent</b>LONG / SHORT / NO TRADE</div><div class="parrow">→</div>
+      <div class="pstep"><b>UI</b>Streamlit dashboard</div>
+    </div>
+
+    <h3 style="font-size:15px;color:var(--mist);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace;font-weight:500;">Fixed income pipeline</h3>
+    <div class="pipeline">
+      <div class="pstep"><b>Data</b>Indian 10Y G-Sec, 2016–26</div><div class="parrow">→</div>
+      <div class="pstep"><b>Features</b>Rolling averages, volatility</div><div class="parrow">→</div>
+      <div class="pstep"><b>Model</b>Random Forest, 30-day forecast</div><div class="parrow">→</div>
+      <div class="pstep"><b>Reprice</b>DCF under forecast yield</div><div class="parrow">→</div>
+      <div class="pstep"><b>UI</b>Streamlit + Plotly</div>
+    </div>
+
+    <div class="tech-grid" style="margin-top:30px;">
+      <div class="tech-card card">
+        <h4>Languages &amp; libraries</h4>
+        <div class="chip-row">
+          <span class="chip">Python</span><span class="chip">pandas</span><span class="chip">NumPy</span><span class="chip">scikit-learn</span><span class="chip">Plotly</span><span class="chip">Streamlit</span>
+        </div>
+      </div>
+      <div class="tech-card card">
+        <h4>Finance methods</h4>
+        <div class="chip-row">
+          <span class="chip">Discounted cash flow</span><span class="chip">Yield curve analysis</span><span class="chip">Duration / rate sensitivity</span><span class="chip">Technical indicators</span>
+        </div>
+      </div>
+      <div class="tech-card card">
+        <h4>What this combined build adds</h4>
+        <p style="color:var(--mist);font-size:13.5px;line-height:1.6;">A single navigable shell, a live in-browser DCF/duration calculator (beyond either repo's current UI), and one shared visual language across both tools.</p>
+      </div>
+      <div class="tech-card card">
+        <h4>Suggested next steps</h4>
+        <p style="color:var(--mist);font-size:13.5px;line-height:1.6;">Merge both Streamlit apps behind one <span class="mono">st.navigation()</span> multipage shell; add convexity and portfolio-level risk; cache yfinance calls; add a shared <span class="mono">requirements.txt</span> and one README.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="credit">By <b>Ridhima Pant</b></div>
+  <div class="foot-links">
+    <a href="https://github.com/ridhimabrb/Trading-Analyst" target="_blank">Equity repo</a>
+    <a href="https://github.com/ridhimabrb/ML-Powered-Bond-Yield-Forecaster" target="_blank">Bond repo</a>
+  </div>
+</footer>
+
+<script>
+/* ---------- Tabs ---------- */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id===name));
+}
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
+
+/* ---------- Ticker tape ---------- */
+const tickData = [
+  {s:'NIFTY 50', v:'24,812.30', d:'+0.42%', up:true},
+  {s:'SENSEX', v:'81,204.60', d:'+0.38%', up:true},
+  {s:'RELIANCE', v:'2,981.10', d:'-0.15%', up:false},
+  {s:'TCS', v:'4,102.55', d:'+0.61%', up:true},
+  {s:'INFY', v:'1,589.20', d:'+0.29%', up:true},
+  {s:'10Y G-SEC', v:'7.01%', d:'-2bps', up:false},
+  {s:'5Y G-SEC', v:'6.84%', d:'+1bp', up:true},
+  {s:'USD/INR', v:'86.42', d:'+0.08%', up:true},
+];
+function renderTicker(){
+  const html = tickData.map(t=>`<span class="tick">${t.s} <b>${t.v}</b> <span class="${t.up?'up':'down'}">${t.d}</span></span>`).join('');
+  document.getElementById('tickerTrack').innerHTML = html + html;
+}
+renderTicker();
+
+/* ---------- Market Direction demo data (seeded, deterministic) ---------- */
+const tickers = ['RELIANCE','TCS','INFY','NIFTY 50'];
+let activeTicker = 0;
+
+function seededRandom(seed){
+  let s = seed;
+  return function(){
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function genSeries(seed, n){
+  const rnd = seededRandom(seed);
+  let price = 100 + rnd()*20;
+  const pts = [];
+  for(let i=0;i<n;i++){
+    price += (rnd()-0.48) * 2.1;
+    pts.push(price);
+  }
+  return pts;
+}
+
+function drawPriceChart(seed){
+  const pts = genSeries(seed, 60);
+  const w=640,h=220,pad=10;
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const scaleX = i => pad + (i/(pts.length-1))*(w-2*pad);
+  const scaleY = v => h-pad - ((v-min)/(max-min))*(h-2*pad);
+  let path = pts.map((v,i)=> (i===0?'M':'L') + scaleX(i).toFixed(1) + ',' + scaleY(v).toFixed(1)).join(' ');
+  const last = pts[pts.length-1];
+  const areaPath = path + ` L${scaleX(pts.length-1)},${h-pad} L${scaleX(0)},${h-pad} Z`;
+  const up = pts[pts.length-1] > pts[0];
+  const color = up ? '#35c48c' : '#e1615a';
+  const svg = document.getElementById('priceChart');
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="areaFade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${areaPath}" fill="url(#areaFade)" stroke="none"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2"/>
+    <circle cx="${scaleX(pts.length-1)}" cy="${scaleY(last)}" r="4" fill="${color}"/>
+  `;
+}
+
+function renderDecision(seed){
+  const rnd = seededRandom(seed+7);
+  const probUp = Math.round((0.42 + rnd()*0.16)*100);
+  const probDown = 100-probUp;
+  const decision = probUp > 56 ? 'LONG' : probUp < 44 ? 'SHORT' : 'NO TRADE';
+  const isLong = decision === 'LONG';
+  const cls = decision==='NO TRADE' ? '' : (isLong?'long':'short');
+
+  document.getElementById('decisionBadge').innerHTML = `
+    <div class="decision-badge ${cls || 'long'}" style="${decision==='NO TRADE'?'background:rgba(140,147,166,.12);border:1px solid rgba(140,147,166,.4);':''}">
+      <span class="dot" style="${decision==='NO TRADE'?'background:#8c93a6;':''}"></span>
+      <span class="txt" style="${decision==='NO TRADE'?'color:#8c93a6;':''}">${decision}</span>
+    </div>`;
+
+  document.getElementById('probBars').innerHTML = `
+    <div class="prob-row"><span class="prob-label">UP</span><div class="prob-track"><div class="prob-fill" style="width:${probUp}%;background:#35c48c;"></div></div><span class="prob-val">${probUp}%</span></div>
+    <div class="prob-row"><span class="prob-label">DOWN</span><div class="prob-track"><div class="prob-fill" style="width:${probDown}%;background:#e1615a;"></div></div><span class="prob-val">${probDown}%</span></div>
+  `;
+
+  const rsi = (40+rnd()*35).toFixed(1);
+  const ma5 = (100+rnd()*20).toFixed(2);
+  const ma20 = (100+rnd()*20).toFixed(2);
+  const vol = (0.8+rnd()*1.4).toFixed(2);
+  document.getElementById('featTable').innerHTML = `
+    <tr><td>RSI (14)</td><td>${rsi}</td></tr>
+    <tr><td>5-day MA</td><td>${ma5}</td></tr>
+    <tr><td>20-day MA</td><td>${ma20}</td></tr>
+    <tr><td>Rolling volatility</td><td>${vol}%</td></tr>
+  `;
+}
+
+function renderTickerSelect(){
+  document.getElementById('tselRow').innerHTML = tickers.map((t,i)=>
+    `<button class="tsel ${i===activeTicker?'active':''}" data-i="${i}">${t}</button>`).join('');
+  document.querySelectorAll('.tsel').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeTicker = parseInt(btn.dataset.i);
+      renderTickerSelect();
+      updateMarketPanel();
+    });
+  });
+}
+
+function updateMarketPanel(){
+  const seed = 100 + activeTicker*37;
+  drawPriceChart(seed);
+  renderDecision(seed);
+}
+
+renderTickerSelect();
+updateMarketPanel();
+
+/* ---------- Bond DCF calculator (real math) ---------- */
+function computeBond(face, couponRate, years, yieldRate, freq){
+  const n = years*freq;
+  const c = (couponRate/100)*face/freq;
+  const y = (yieldRate/100)/freq;
+  let price = 0;
+  let weightedTime = 0;
+  for(let t=1;t<=n;t++){
+    const cf = (t===n) ? c+face : c;
+    const df = Math.pow(1+y, -t);
+    const pv = cf*df;
+    price += pv;
+    weightedTime += (t/freq)*pv;
+  }
+  const macaulay = weightedTime/price;
+  const modified = macaulay/(1+y);
+  return {price, macaulay, modified};
+}
+
+function fmtINR(v){
+  return '₹' + v.toLocaleString('en-IN', {maximumFractionDigits:2, minimumFractionDigits:2});
+}
+
+function updateBondCalc(){
+  const face = parseFloat(document.getElementById('faceValue').value)||0;
+  const couponRate = parseFloat(document.getElementById('couponRate').value)||0;
+  const years = parseFloat(document.getElementById('maturity').value)||0;
+  const yieldRate = parseFloat(document.getElementById('marketYield').value)||0;
+  const freq = parseInt(document.getElementById('frequency').value);
+
+  const base = computeBond(face, couponRate, years, yieldRate, freq);
+
+  document.getElementById('bondPrice').textContent = fmtINR(base.price);
+  const premDisc = base.price - face;
+  const premLabel = premDisc>=0 ? 'Premium' : 'Discount';
+  document.getElementById('bondPremium').textContent = `${premLabel} of ${fmtINR(Math.abs(premDisc))}`;
+  document.getElementById('macDuration').textContent = base.macaulay.toFixed(2) + ' yrs';
+  document.getElementById('modDuration').textContent = base.modified.toFixed(2) + ' yrs';
+
+  const shockBps = parseInt(document.getElementById('shockSlider').value);
+  document.getElementById('shockVal').textContent = (shockBps>=0?'+':'') + shockBps + ' bps';
+  const shockedYield = yieldRate + shockBps/100;
+  const shocked = computeBond(face, couponRate, years, shockedYield, freq);
+  document.getElementById('shockPrice').textContent = fmtINR(shocked.price);
+  const delta = shocked.price - base.price;
+  const deltaPct = (delta/base.price*100);
+  const sign = delta>=0?'+':'';
+  document.getElementById('shockDelta').textContent = `${sign}${fmtINR(delta)} (${sign}${deltaPct.toFixed(2)}%)`;
+  document.getElementById('shockDelta').style.color = delta>=0 ? '#35c48c' : '#e1615a';
+
+  drawYieldCurve(yieldRate, shockedYield, years);
+}
+
+function drawYieldCurve(baseYield, shockYield, years){
+  const w=640,h=140,pad=20;
+  const points = 20;
+  const svg = document.getElementById('yieldCurveChart');
+  const maxY = Math.max(baseYield, shockYield) + 1;
+  const minY = Math.max(0, Math.min(baseYield, shockYield) - 1);
+  function curvePath(startY, endY){
+    let pts = [];
+    for(let i=0;i<=points;i++){
+      const frac = i/points;
+      const t = frac*years;
+      const y = startY + (endY-startY)*Math.sqrt(frac);
+      pts.push({x:t, y});
+    }
+    const scaleX = t => pad + (t/years)*(w-2*pad);
+    const scaleY = y => h-pad - ((y-minY)/(maxY-minY))*(h-2*pad);
+    return pts.map((p,i)=>(i===0?'M':'L')+scaleX(p.x).toFixed(1)+','+scaleY(p.y).toFixed(1)).join(' ');
+  }
+  const base = curvePath(baseYield*0.85, baseYield);
+  const shock = curvePath(shockYield*0.85, shockYield);
+  svg.innerHTML = `
+    <path d="${base}" fill="none" stroke="#c6a15b" stroke-width="2"/>
+    <path d="${shock}" fill="none" stroke="#8c93a6" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="${pad}" y="14" fill="#8c93a6" font-family="IBM Plex Mono" font-size="10.5">current yield curve (gold) vs shocked (dashed)</text>
+  `;
+}
+
+['faceValue','couponRate','maturity','marketYield','frequency','shockSlider'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateBondCalc);
+});
+updateBondCalc();
+</script>
+
+</body>
+</html>
