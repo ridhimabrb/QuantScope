@@ -15,3 +15,5 @@ and turns the probability into a LONG / SHORT / NO TRADE call with a plain-langu
 **Bond Yield Lab** -- prices a bond via discounted cash flow (DCF), computes Macaulay and
 modified duration, lets you shock the yield curve and see the repriced value instantly, and
 forecasts 30-day G-Sec yield moves with a Random Forest model trained on historical yield data.
+
+<img width="923" height="420" alt="image" src="https://github.com/user-attachments/assets/66717661-aecc-47e6-9133-5d60704d0865" />
